@@ -1,0 +1,11 @@
+exception Exception of string
+
+let begin_ trans = trans []
+
+let push orig elem trans = trans (elem :: orig)
+
+let add lst trans = match lst with
+                      | x::y::xs -> trans ( (x + y) :: xs )
+                      | _ -> raise (Exception "empty")
+
+let end_ = List.head
