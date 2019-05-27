@@ -1,0 +1,37 @@
+module Sprintf
+
+%access public export
+%default total
+
+data Fmt : Type where
+  F : Fmt
+  D : Fmt
+  C : Fmt
+  Ch : Char -> Fmt
+
+parse : List Char -> List Fmt
+parse [] = []
+parse ('%' :: []) = []
+parse ('%' :: '%' :: cs) = Ch '%' :: parse cs
+parse ('%' :: 'f' :: cs) = F :: parse cs
+parse ('%' :: 'd' :: cs) = D :: parse cs
+parse ('%' :: 'c' :: cs) = C :: parse cs
+parse ('%' :: _ :: cs) = parse cs
+parse (c :: cs) = Ch c :: parse cs
+
+RetTy : List Fmt -> Type
+RetTy [] = String
+RetTy (F :: xs) = Double -> RetTy xs
+RetTy (D :: xs) = Integer -> RetTy xs
+RetTy (C :: xs) = Char -> RetTy xs
+RetTy (Ch x :: xs) = RetTy xs
+
+sprintf' : (String -> String) -> (s : List Fmt) -> RetTy s
+sprintf' k [] = the (RetTy []) (k "")
+sprintf' k (F :: xs) = \f => sprintf' (k . (\s => show f ++ s)) xs
+sprintf' k (D :: xs) = \d => sprintf' (k . (\s => show d ++ s)) xs
+sprintf' k (C :: xs) = \c => sprintf' (k . (\s => pack [c] ++ s)) xs
+sprintf' k (Ch x :: xs) = sprintf' (k . (\s => pack [x] ++ s)) xs
+
+sprintf : (s : String) -> RetTy (parse (unpack s))
+sprintf s = sprintf' id (parse (unpack s))
